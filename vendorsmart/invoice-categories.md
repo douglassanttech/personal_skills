@@ -1,17 +1,18 @@
-# Skill: Invoice Categories — Create for Management Company
+# Skill: Invoice Categories & Delivery Instructions — Create for Management Company
 
 ## Purpose
 
 Use this skill whenever the user asks to:
 - Add invoice categories to a management company (manco)
-- Create/insert invoice categories in QA or PROD
-- Set up invoice category options for a manco
+- Add invoice delivery instructions to a management company (manco)
+- Create/insert either of the above in QA or PROD
+- Set up invoice category or delivery instruction options for a manco
 
 ---
 
 ## Background
 
-Invoice categories are stored in `dbo.invoice_category` in the `vsp_payments` database. They are fetched by the frontend via `GET /management-company/{mancoId}` and displayed only when `mancoConfig.invoiceCategories.length > 0`. No frontend or backend code changes are needed — it's a pure DB operation.
+Both `invoice_category` and `invoice_delivery_instruction` live in `dbo` schema of the `vsp_payments` database. They are fetched by the frontend via `GET /management-company/{mancoId}` and displayed only when the respective array is non-empty in the manco config. No frontend or backend code changes are needed — pure DB operations.
 
 ---
 
@@ -34,17 +35,23 @@ sqlcmd -S "$DB_HOST" -U "$DB_USER_NAME" -P "$DB_PASSWORD" -d "vsp_payments" \
   -Q "SELECT id FROM dbo.management_companies WHERE id = '<mancoId>'"
 ```
 
-### 2 — Check existing categories (avoid duplicates)
+### 2 — Check existing records (avoid duplicates)
 
+**Categories:**
 ```sql
-SELECT id, name
-FROM dbo.invoice_category
-WHERE management_company_id = '<mancoId>'
-  AND deleted_at IS NULL;
+SELECT id, name FROM dbo.invoice_category
+WHERE management_company_id = '<mancoId>' AND deleted_at IS NULL;
 ```
 
-### 3 — Insert new categories
+**Delivery instructions:**
+```sql
+SELECT id, name FROM dbo.invoice_delivery_instruction
+WHERE management_company_id = '<mancoId>' AND deleted_at IS NULL;
+```
 
+### 3 — Insert
+
+**Categories:**
 ```sql
 INSERT INTO dbo.invoice_category (id, name, management_company_id, created_at, updated_at, created_by)
 VALUES
@@ -56,15 +63,35 @@ VALUES
   (NEWID(), 'Manual Credit', '<mancoId>', GETDATE(), GETDATE(), 'system');
 ```
 
-Adapt the category names to what the user specifies. Always run step 2 first to avoid inserting duplicates.
+**Delivery instructions:**
+```sql
+INSERT INTO dbo.invoice_delivery_instruction (id, name, management_company_id, created_at, updated_at, created_by)
+VALUES
+  (NEWID(), 'No special instructions',                           '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Notice of commencement',                            '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Return to accounts receivable',                     '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Return to risk management',                         '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Return to community manager',                       '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Return to requestor',                               '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Return to customer experience',                     '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'Return to CPA roster',                              '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'FEDEXD - FedEx to division charge assn',            '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'FEDEXDD - FedEx to division charge division',       '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'FEDEXV - FedEx to vendor directly charge assn',     '<mancoId>', GETDATE(), GETDATE(), 'system'),
+  (NEWID(), 'FEDEXVD - FedEx to vendor directly charge division','<mancoId>', GETDATE(), GETDATE(), 'system');
+```
+
+Adapt names to what the user specifies. Always run step 2 first to avoid duplicates.
 
 ### 4 — Verify
 
 ```sql
-SELECT id, name, created_at
-FROM dbo.invoice_category
-WHERE management_company_id = '<mancoId>'
-  AND deleted_at IS NULL
+SELECT name, created_at FROM dbo.invoice_category
+WHERE management_company_id = '<mancoId>' AND deleted_at IS NULL
+ORDER BY created_at;
+
+SELECT name, created_at FROM dbo.invoice_delivery_instruction
+WHERE management_company_id = '<mancoId>' AND deleted_at IS NULL
 ORDER BY created_at;
 ```
 
@@ -75,5 +102,5 @@ ORDER BY created_at;
 - `id` → `uniqueidentifier`, use `NEWID()`
 - `created_by` → default `'system'`
 - `updated_by` → nullable, can be omitted
-- `deleted_at` → soft-delete column; always filter `deleted_at IS NULL` when querying
+- `deleted_at` → soft-delete; always filter `deleted_at IS NULL` when querying
 - For PROD inserts, confirm with the user before executing
