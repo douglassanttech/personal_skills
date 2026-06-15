@@ -70,6 +70,9 @@ The authorize REQUEST entry is the one logged just before the authorize RESPONSE
 
 ## Step 3 — Compose support-ticket email
 
+**Subject:** `Check Payment Failed — Invalid Vendor Address | <name1> (<vendorNumber>)`
+
+**Body:**
 ```
 Vendor name: <name1>
 Vendor code: <vendorNumber>
@@ -81,6 +84,7 @@ Vendor zip: <zip>
 Payment total amount: <paymentDetails.totalAmount>
 Payment ID in VS: <data.paymentId>
 Payment ID in Payabli: <data.externalPaymentId>
+Payabli transaction: https://app.payabli.com/gridsystems/pay-out/transactions?payout_paymentId=<data.externalPaymentId>
 
 Error was:
 <resultText>
