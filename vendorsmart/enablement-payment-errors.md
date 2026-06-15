@@ -70,7 +70,7 @@ The authorize REQUEST entry is the one logged just before the authorize RESPONSE
 
 ## Step 3 — Compose support-ticket email
 
-**Subject:** `Check Payment Failed — Invalid Vendor Address | <name1> (<vendorNumber>)`
+**Subject:** `Payment Failed — Invalid Vendor Address | <name1> (<vendorNumber>)`
 
 **Body:**
 ```
